@@ -1,0 +1,128 @@
+{
+  "generated_by": "hand-written fixture — 不是模型输出",
+  "note": "仅用于离线验证流水线 (解析/校验/重试/缓存/执行)。里面的用例是我手写的, 所以任何由它算出的召回率/误报率都【不代表模型能力】。要得到真实指标, 配置 DEEPSEEK_API_KEY 后跑 python scripts/run_m2.py --real。",
+  "responses": {
+    "POST /api/v1/orders": {
+      "cases": [
+        {
+          "case_name": "创建订单-最小合法请求",
+          "category": "positive",
+          "type": "正向",
+          "scenario": "正向: 只带必填字段",
+          "request": {
+            "path_params": {},
+            "query": {},
+            "headers": {},
+            "body": { "item_id": "SKU-2001", "quantity": 1, "amount": 10.0 }
+          },
+          "expected": { "status": 201, "note": "合法请求应创建成功" }
+        },
+        {
+          "case_name": "创建订单-备注 25 字符(文档允许 200)",
+          "category": "boundary",
+          "type": "正向",
+          "scenario": "边界值: 远小于文档 maxLength=200 的备注长度",
+          "request": {
+            "path_params": {},
+            "query": {},
+            "headers": {},
+            "body": {
+              "item_id": "SKU-3001",
+              "quantity": 1,
+              "amount": 10.0,
+              "remark": "this_remark_is_too_long!!"
+            }
+          },
+          "expected": { "status": 201, "note": "文档声明 maxLength=200, 25 字符应可创建" }
+        },
+        {
+          "case_name": "创建订单-金额为负数",
+          "category": "boundary",
+          "type": "异常",
+          "scenario": "边界值: 金额下边界之外",
+          "request": {
+            "path_params": {},
+            "query": {},
+            "headers": {},
+            "body": { "item_id": "SKU-3002", "quantity": 1, "amount": -1 }
+          },
+          "expected": { "status": 400, "note": "金额必须大于 0" }
+        },
+        {
+          "case_name": "创建订单-缺少必填 quantity",
+          "category": "equivalence",
+          "type": "异常",
+          "scenario": "等价类异常: 必填字段缺失",
+          "request": {
+            "path_params": {},
+            "query": {},
+            "headers": {},
+            "body": { "item_id": "SKU-9", "amount": 1.0 }
+          },
+          "expected": { "status": 422, "note": "缺少必填字段应被参数校验拦截" }
+        },
+        {
+          "case_name": "创建订单-带埋点参数",
+          "category": "positive",
+          "type": "正向",
+          "scenario": "正向: 附带链路追踪参数",
+          "request": {
+            "path_params": {},
+            "query": { "trace_id": "abc-123" },
+            "headers": { "X-Request-Id": "req-1" },
+            "body": {
+              "item_id": "SKU-3001",
+              "quantity": 2,
+              "amount": 20.0,
+              "coupon_code": "SUMMER"
+            }
+          },
+          "expected": { "status": 201, "note": "多余参数不影响创建" }
+        }
+      ]
+    },
+    "GET /api/v1/orders": {
+      "cases": [
+        {
+          "case_name": "订单列表-默认分页",
+          "category": "positive",
+          "type": "正向",
+          "scenario": "正向: 默认 page=1, page_size=10",
+          "request": {
+            "path_params": {},
+            "query": { "page": 1, "page_size": 10 },
+            "headers": {},
+            "body": null
+          },
+          "expected": { "status": 200, "note": "正常分页查询" }
+        },
+        {
+          "case_name": "订单列表-page=0",
+          "category": "boundary",
+          "type": "异常",
+          "scenario": "边界值: 页码下边界之外",
+          "request": {
+            "path_params": {},
+            "query": { "page": 0, "page_size": 2 },
+            "headers": {},
+            "body": null
+          },
+          "expected": { "status": 400, "note": "页码必须从 1 开始" }
+        },
+        {
+          "case_name": "订单列表-page_size 为负数",
+          "category": "boundary",
+          "type": "异常",
+          "scenario": "边界值: 每页条数下边界之外",
+          "request": {
+            "path_params": {},
+            "query": { "page": 1, "page_size": -1 },
+            "headers": {},
+            "body": null
+          },
+          "expected": { "status": 400, "note": "每页条数必须为正整数" }
+        }
+      ]
+    }
+  }
+}
