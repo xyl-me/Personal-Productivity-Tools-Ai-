@@ -1,0 +1,133 @@
+"""{{ title }}
+
+由「接口用例智能生成与质量评测平台」自动生成 —— 请勿手工修改, 重新生成会覆盖。
+
+生成时间: {{ generated_at }}
+用例来源: {{ source }} ({{ case_count }} 条)
+被测服务: {{ base_url }}
+
+运行方式::
+
+    BASE_URL={{ base_url }} pytest {{ filename }} -v
+
+生成的脚本只依赖 pytest 与标准库, 拷到任何机器上都能直接跑。
+
+如果被测服务需要在每条用例前重置数据, 提供一个重置接口, 然后::
+
+    CASE_RESET_URL={{ base_url }}/internal/reset \\
+    CASE_RESET_TOKEN=<令牌> \\
+    BASE_URL=... pytest {{ filename }}
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any
+
+import pytest
+
+BASE_URL = os.environ.get("BASE_URL", "{{ base_url }}").rstrip("/")
+TIMEOUT = float(os.environ.get("TIMEOUT", "10"))
+
+# 本机地址绕过系统代理: 开了 VPN 后 Windows 的 ProxyServer 会把 127.0.0.1 也送去代理
+if any(host in BASE_URL for host in ("127.0.0.1", "localhost", "[::1]")):
+    urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({})))
+
+CASES: list[dict[str, Any]] = {{ cases_json }}
+
+
+def _load_reset_hook():
+    return os.environ.get("CASE_RESET_URL", "").strip() or None
+
+
+RESET_URL = _load_reset_hook()
+RESET_TOKEN = os.environ.get("CASE_RESET_TOKEN", "").strip()
+
+
+def _reset_state() -> None:
+    """重置被测数据。
+
+    必须**通过 HTTP 通知服务端**, 不能在本进程里 import 被测应用再调它的重置函数 ——
+    脚本和服务通常在不同进程 (甚至不同机器), 本进程里重置的是自己那份数据库,
+    对服务端毫无影响。这个坑会让所有依赖数据状态的用例莫名失败, 且极难排查。
+    """
+    headers = {"X-Admin-Token": RESET_TOKEN} if RESET_TOKEN else {}
+    request = urllib.request.Request(RESET_URL, data=b"", headers=headers, method="POST")
+    with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+        response.read()
+
+
+def _request(case: dict[str, Any]) -> tuple[int, str]:
+    """只依赖标准库的 HTTP 调用。"""
+    url = BASE_URL + case["path"]
+    if case.get("query"):
+        url = url + "?" + urllib.parse.urlencode(case["query"], doseq=True)
+
+    headers = dict(case.get("headers") or {})
+    payload = None
+    if case.get("body") is not None:
+        payload = json.dumps(case["body"], ensure_ascii=False).encode("utf-8")
+        headers.setdefault("Content-Type", "application/json")
+
+    request = urllib.request.Request(url, data=payload, headers=headers, method=case["method"])
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            return response.status, response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:  # 4xx/5xx 走异常分支
+        return exc.code, exc.read().decode("utf-8", "replace")
+
+
+def _is_subset(expected: Any, actual: Any) -> bool:
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(
+            key in actual and _is_subset(value, actual[key]) for key, value in expected.items()
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(expected) == len(actual)
+            and all(_is_subset(e, a) for e, a in zip(expected, actual))
+        )
+    return expected == actual
+
+
+@pytest.mark.parametrize("case", CASES, ids=[item["id"] for item in CASES])
+def test_case(case: dict[str, Any]) -> None:
+    if RESET_URL:
+        _reset_state()
+
+    status, text = _request(case)
+    expected = case["expected"]
+    snippet = text[:300]
+
+    # 5xx 优先: 服务端崩了就是崩了, 哪怕用例期望的正是 500
+    assert status < 500, f"{case['id']} 服务端返回 {status}: {snippet}"
+    assert status in expected["status"], (
+        f"{case['id']} 状态码不匹配: 期望 {expected['status']}, 实际 {status}; 响应: {snippet}"
+    )
+
+    for fragment in expected.get("body_contains") or []:
+        assert fragment in text, f"{case['id']} 响应缺少片段 {fragment!r}"
+
+    if expected.get("json_contains") is not None:
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            pytest.fail(f"{case['id']} 响应不是合法 JSON: {snippet}")
+        assert _is_subset(expected["json_contains"], payload), (
+            f"{case['id']} 响应未包含期望字段 {expected['json_contains']}: {snippet}"
+        )
+
+    if expected.get("json_length") is not None:
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            pytest.fail(f"{case['id']} 响应不是合法 JSON: {snippet}")
+        assert isinstance(payload, list), f"{case['id']} 期望数组响应: {snippet}"
+        assert len(payload) == expected["json_length"], (
+            f"{case['id']} 数组长度不符: 期望 {expected['json_length']}, 实际 {len(payload)}"
+        )
