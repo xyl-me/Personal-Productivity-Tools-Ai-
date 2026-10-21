@@ -1,0 +1,198 @@
+{
+  "suite": "order_service_handwritten",
+  "target": "target_service.main:app",
+  "cases": [
+    {
+      "id": "C01",
+      "name": "创建订单-正常参数",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "body": { "item_id": "SKU-2001", "quantity": 2, "amount": 39.9 },
+      "expect": { "status": 201, "json_contains": { "item_id": "SKU-2001", "status": "CREATED" } },
+      "tags": ["positive"],
+      "description": "最小可用请求体, 同时确认靶场基本可用"
+    },
+    {
+      "id": "C02",
+      "name": "创建订单-缺少必填 item_id",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "body": { "quantity": 1, "amount": 1.0 },
+      "expect": { "status": 422 },
+      "tags": ["control"],
+      "description": "对照组: 必填缺失应由参数校验层拦截"
+    },
+    {
+      "id": "C03",
+      "name": "订单列表-默认分页",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "expect": { "status": 200, "json_length": 3 },
+      "tags": ["positive"],
+      "description": "初始数据 3 条"
+    },
+    {
+      "id": "C04",
+      "name": "订单详情-存在",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/1",
+      "expect": { "status": 200, "json_contains": { "id": 1, "item_id": "SKU-1001" } },
+      "tags": ["positive"]
+    },
+    {
+      "id": "C05",
+      "name": "搜索订单-精确命中",
+      "endpoint": "GET /api/v1/orders/search",
+      "method": "GET",
+      "path": "/api/v1/orders/search",
+      "query": { "q": "SKU-1002" },
+      "expect": { "status": 200, "json_length": 1 },
+      "tags": ["positive"]
+    },
+    {
+      "id": "C06",
+      "name": "订单详情-不存在",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/99999",
+      "expect": { "status": 404 },
+      "tags": ["control"]
+    },
+    {
+      "id": "C07",
+      "name": "删除订单-缺少管理员令牌",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/1",
+      "expect": { "status": 401 },
+      "tags": ["control"],
+      "description": "对照组: 该接口鉴权实现正确"
+    },
+    {
+      "id": "C08",
+      "name": "删除订单-携带正确令牌",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/1",
+      "headers": { "X-Admin-Token": "secret-admin-token" },
+      "expect": { "status": 200 },
+      "tags": ["control"]
+    },
+    {
+      "id": "C09",
+      "name": "删除订单-不存在的订单",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/99999",
+      "headers": { "X-Admin-Token": "secret-admin-token" },
+      "expect": { "status": 404 },
+      "tags": ["control"]
+    },
+    {
+      "id": "C10",
+      "name": "创建订单-备注 25 字符(文档允许 200)",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "body": {
+        "item_id": "SKU-3001",
+        "quantity": 1,
+        "amount": 10.0,
+        "remark": "this_remark_is_too_long!!"
+      },
+      "expect": { "status": 201 },
+      "tags": ["boundary"],
+      "description": "文档声明 maxLength=200, 按文档应可创建; 用于验证文档与实现是否一致"
+    },
+    {
+      "id": "C11",
+      "name": "创建订单-金额为负",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "body": { "item_id": "SKU-3002", "quantity": 1, "amount": -1 },
+      "expect": { "status": 400 },
+      "tags": ["boundary", "business"],
+      "description": "等价类: 非法的金额取值域"
+    },
+    {
+      "id": "C12",
+      "name": "创建订单-数量为 0",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "body": { "item_id": "SKU-3003", "quantity": 0, "amount": 1.0 },
+      "expect": { "status": 400 },
+      "tags": ["boundary", "business"],
+      "description": "边界值: 数量的下边界"
+    },
+    {
+      "id": "C13",
+      "name": "搜索订单-SQL 注入串",
+      "endpoint": "GET /api/v1/orders/search",
+      "method": "GET",
+      "path": "/api/v1/orders/search",
+      "query": { "q": "' OR '1'='1" },
+      "expect": { "status": 200, "json_length": 0 },
+      "tags": ["security"],
+      "description": "注入串按字面匹配应无结果; 若返回全部订单说明存在注入"
+    },
+    {
+      "id": "C14",
+      "name": "订单列表-page=0",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": { "page": 0, "page_size": 2 },
+      "expect": { "status": 400 },
+      "tags": ["boundary"],
+      "description": "页码下边界：非法页码应被拒绝"
+    },
+    {
+      "id": "C15",
+      "name": "订单列表-page_size=-1",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": { "page": 1, "page_size": -1 },
+      "expect": { "status": 400 },
+      "tags": ["boundary"],
+      "description": "每页条数下边界：负数应被拒绝"
+    },
+    {
+      "id": "C16",
+      "name": "订单详情-非数字 ID",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/abc",
+      "expect": { "status": 404 },
+      "tags": ["type"],
+      "description": "文档声明 order_id 为 string, 非数字输入应正常返回未找到而非 5xx"
+    },
+    {
+      "id": "C17",
+      "name": "更新状态-非法枚举值",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "body": { "status": "HACKED" },
+      "expect": { "status": 400 },
+      "tags": ["enum"],
+      "description": "错误推测: 状态机之外的值不应被写入"
+    },
+    {
+      "id": "C18",
+      "name": "导出订单-无鉴权调用",
+      "endpoint": "GET /api/v1/admin/orders/export",
+      "method": "GET",
+      "path": "/api/v1/admin/orders/export",
+      "expect": { "status": 401 },
+      "tags": ["security"],
+      "description": "管理接口不带令牌应被拒绝"
+    }
+  ]
+}

@@ -1,0 +1,746 @@
+{
+  "suite": "ai_generated_real",
+  "target": "deepseek-chat",
+  "cases": [
+    {
+      "id": "AI-GET-api-v1-admin-orders-export-001",
+      "name": "导出订单-携带正确管理员令牌",
+      "endpoint": "GET /api/v1/admin/orders/export",
+      "method": "GET",
+      "path": "/api/v1/admin/orders/export",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 最小合法请求, 带有效 X-Admin-Token 导出全部订单"
+    },
+    {
+      "id": "AI-GET-api-v1-admin-orders-export-002",
+      "name": "导出订单-不携带管理员令牌",
+      "endpoint": "GET /api/v1/admin/orders/export",
+      "method": "GET",
+      "path": "/api/v1/admin/orders/export",
+      "query": {},
+      "headers": {},
+      "body": null,
+      "expect": {
+        "status": 401,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security"
+      ],
+      "description": "安全: 缺少 X-Admin-Token 凭据, 应拒绝访问"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-001",
+      "name": "分页查询订单-默认参数",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 不传任何查询参数, 使用默认 page=1, page_size=10"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-002",
+      "name": "分页查询订单-完整合法参数",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 2,
+        "page_size": 20
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 显式传入合法 page 与 page_size"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-003",
+      "name": "分页查询订单-page 为 0 越界",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 0,
+        "page_size": 10
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: page 下边界之外 (0), 页码从 1 开始"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-004",
+      "name": "分页查询订单-page_size 为负数",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 1,
+        "page_size": -5
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: page_size 为负数, 超出合法下边界"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-005",
+      "name": "分页查询订单-page 类型错误",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": "abc",
+        "page_size": 10
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: page 传入非整数字符串, 类型不匹配"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-006",
+      "name": "分页查询订单-page_size 注入串",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 1,
+        "page_size": "1;DROP TABLE orders--"
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security"
+      ],
+      "description": "安全: page_size 传入 SQL 注入串, 验证参数化查询防护"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-001",
+      "name": "创建订单-最小合法请求",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM-001",
+        "quantity": 1,
+        "amount": 0.01
+      },
+      "expect": {
+        "status": 201,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 仅传必填字段 item_id/quantity/amount, 不传可选 remark"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-002",
+      "name": "创建订单-完整合法请求",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345",
+        "quantity": 100,
+        "amount": 9999.99,
+        "remark": "这是一条长度为200的备注..."
+      },
+      "expect": {
+        "status": 201,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 传全部合法字段, item_id 取最大长度 32, remark 取最大长度 200"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-003",
+      "name": "创建订单-item_id 超长越界",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456",
+        "quantity": 1,
+        "amount": 10
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: item_id 长度 33 超出 maxLength=32"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-004",
+      "name": "创建订单-缺少必填字段 amount",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM-001",
+        "quantity": 1
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: 必填字段 amount 缺失"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-005",
+      "name": "创建订单-quantity 类型错误",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM-001",
+        "quantity": "abc",
+        "amount": 10
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: quantity 传字符串而非整数"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-006",
+      "name": "创建订单-remark 注入串与超长",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "",
+        "quantity": 1,
+        "amount": 10,
+        "remark": "' OR 1=1; DROP TABLE orders; --"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security"
+      ],
+      "description": "安全: remark 传入 SQL 注入串且长度超过 200, 同时 item_id 传空串"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-search-001",
+      "name": "按商品编号搜索订单-正常关键字",
+      "endpoint": "GET /api/v1/orders/search",
+      "method": "GET",
+      "path": "/api/v1/orders/search",
+      "query": {
+        "q": "ITEM001"
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 合法q查询"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-order-id-001",
+      "name": "查询订单-存在的订单ID",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/1",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 使用已知存在的订单 ID 查询, 返回订单详情"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-order-id-002",
+      "name": "查询订单-订单ID为0下边界",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/0",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 404,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: 订单 ID 为数字下边界 0, 通常不存在"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-order-id-003",
+      "name": "查询订单-订单ID为超长数字串",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/9999999999999999999999999999999999999999",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 404,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: 订单 ID 为超长数字字符串, 超出正常 ID 范围"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-order-id-004",
+      "name": "查询订单-订单ID为非数字字符串",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/abc",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: 订单 ID 为字母字符串, 不符合数字字符串格式"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-order-id-005",
+      "name": "查询订单-订单ID含SQL注入串",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "method": "GET",
+      "path": "/api/v1/orders/1%27%20OR%20%271%27%3D%271",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security"
+      ],
+      "description": "安全: 订单 ID 注入 SQL 片段, 验证参数化查询防护"
+    },
+    {
+      "id": "AI-DELETE-api-v1-orders-order-id-001",
+      "name": "删除订单-管理员令牌正确",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/1",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 携带正确管理员令牌删除已存在订单"
+    },
+    {
+      "id": "AI-DELETE-api-v1-orders-order-id-002",
+      "name": "删除订单-不带管理员令牌",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/1",
+      "query": {},
+      "headers": {},
+      "body": null,
+      "expect": {
+        "status": 401,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security"
+      ],
+      "description": "安全: 缺少 X-Admin-Token 凭据"
+    },
+    {
+      "id": "AI-DELETE-api-v1-orders-order-id-003",
+      "name": "删除订单-订单不存在",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/999999999",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 404,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: 订单 ID 不存在"
+    },
+    {
+      "id": "AI-DELETE-api-v1-orders-order-id-004",
+      "name": "删除订单-订单ID类型错误",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/abc",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "等价类异常: order_id 传入非整数字符串"
+    },
+    {
+      "id": "AI-DELETE-api-v1-orders-order-id-005",
+      "name": "删除订单-订单ID为负数",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "method": "DELETE",
+      "path": "/api/v1/orders/-1",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 404,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary"
+      ],
+      "description": "边界值: order_id 为负数越界值"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-001",
+      "name": "更新订单状态-合法状态PAID",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "status": "PAID"
+      },
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 使用已存在订单与合法状态值 PAID 更新"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-002",
+      "name": "更新订单状态-合法状态CANCELLED",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "status": "CANCELLED"
+      },
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive"
+      ],
+      "description": "正向: 使用合法状态值 CANCELLED 更新"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-003",
+      "name": "更新订单状态-缺少status字段",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {},
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "必填缺失: body 中缺少必填字段 status"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-004",
+      "name": "更新订单状态-status类型错误",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "status": 123
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "类型错误: status 传入整数而非字符串"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-005",
+      "name": "更新订单状态-order_id类型非法",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/abc/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "status": "PAID"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence"
+      ],
+      "description": "类型错误: 路径参数 order_id 传入非整数"
+    },
+    {
+      "id": "AI-PUT-api-v1-orders-order-id-status-006",
+      "name": "更新订单状态-枚举外状态值",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "method": "PUT",
+      "path": "/api/v1/orders/1/status",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "status": "SHIPPED_UNKNOWN"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "error_guess"
+      ],
+      "description": "非法状态流转: status 传入规范外枚举值"
+    }
+  ]
+}

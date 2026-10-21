@@ -1,0 +1,508 @@
+{
+  "suite": "incremental_real",
+  "target": "deepseek-chat",
+  "cases": [
+    {
+      "id": "AI-GET-api-v1-orders-001",
+      "name": "分页查询订单-默认参数",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "正向: 不传任何查询参数, 使用默认 page=1, page_size=10"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-002",
+      "name": "分页查询订单-完整合法参数",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 2,
+        "page_size": 20
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "正向: 显式传入合法 page 与 page_size"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-003",
+      "name": "分页查询订单-page_size 上边界",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 1,
+        "page_size": 50
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "边界值: page_size 取允许的最大值 50"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-004",
+      "name": "分页查询订单-page_size 越界",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": 1,
+        "page_size": 51
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "边界值: page_size 超过最大值 50"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-005",
+      "name": "分页查询订单-page 类型错误",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": "abc",
+        "page_size": 10
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "等价类异常: page 传入非整数字符串"
+    },
+    {
+      "id": "AI-GET-api-v1-orders-006",
+      "name": "分页查询订单-page 注入串",
+      "endpoint": "GET /api/v1/orders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "query": {
+        "page": "1 OR 1=1",
+        "page_size": 10
+      },
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": null,
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "security",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "安全: page 传入 SQL 注入串, 验证参数化查询防护"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-001",
+      "name": "创建订单-最小合法请求",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM001",
+        "quantity": 1,
+        "amount": 0.01
+      },
+      "expect": {
+        "status": 201,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "正向: 仅传必填字段 item_id/quantity/amount, 最小合法请求"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-002",
+      "name": "创建订单-完整合法请求",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM002",
+        "quantity": 10,
+        "amount": 199.99,
+        "channel": "app",
+        "remark": "尽快发货"
+      },
+      "expect": {
+        "status": 201,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "正向: 传全部合法字段, 含 channel 枚举值与 remark"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-003",
+      "name": "创建订单-数量为0越界",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM003",
+        "quantity": 0,
+        "amount": 10
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "边界值: quantity 最小值 1 的下边界之外 (0)"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-004",
+      "name": "创建订单-缺少必填字段amount",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM004",
+        "quantity": 2
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "等价类异常: 必填字段 amount 缺失"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-005",
+      "name": "创建订单-渠道枚举外值",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM005",
+        "quantity": 1,
+        "amount": 10,
+        "channel": "h5"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "等价类异常: channel 传入枚举外值 'h5'"
+    },
+    {
+      "id": "AI-POST-api-v1-orders-006",
+      "name": "创建订单-备注超长字符串",
+      "endpoint": "POST /api/v1/orders",
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "item_id": "ITEM006",
+        "quantity": 1,
+        "amount": 10,
+        "remark": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "error_guess",
+        "incremental",
+        "changed",
+        "breaking"
+      ],
+      "description": "错误推测/安全: remark 超过 maxLength 120 的超长字符串"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-001",
+      "name": "更新订单备注-最小合法请求",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "remark": "a"
+      },
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "added"
+      ],
+      "description": "正向: remark 为最短合法字符串(1 个字符), 资源存在"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-002",
+      "name": "更新订单备注-完整合法请求",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "remark": "请尽快发货"
+      },
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "positive",
+        "positive",
+        "incremental",
+        "added"
+      ],
+      "description": "正向: remark 为普通完整字符串"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-003",
+      "name": "更新订单备注-长度上边界20",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "remark": "12345678901234567890"
+      },
+      "expect": {
+        "status": 200,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary",
+        "incremental",
+        "added"
+      ],
+      "description": "边界值: remark 长度恰好等于 maxLength=20"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-004",
+      "name": "更新订单备注-长度越界21",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "remark": "123456789012345678901"
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "boundary",
+        "incremental",
+        "added"
+      ],
+      "description": "边界值: remark 长度超过 maxLength=20 一个字符"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-005",
+      "name": "更新订单备注-缺少必填remark",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {},
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence",
+        "incremental",
+        "added"
+      ],
+      "description": "等价类异常: 请求体缺少必填字段 remark"
+    },
+    {
+      "id": "AI-PATCH-api-v1-orders-order-id-remark-006",
+      "name": "更新订单备注-remark类型错误",
+      "endpoint": "PATCH /api/v1/orders/{order_id}/remark",
+      "method": "PATCH",
+      "path": "/api/v1/orders/1/remark",
+      "query": {},
+      "headers": {
+        "X-Admin-Token": "secret-admin-token"
+      },
+      "body": {
+        "remark": 123
+      },
+      "expect": {
+        "status": 422,
+        "json_contains": null,
+        "json_length": null,
+        "body_contains": []
+      },
+      "tags": [
+        "equivalence",
+        "incremental",
+        "added"
+      ],
+      "description": "等价类异常: remark 传入非字符串类型(数字)"
+    }
+  ]
+}
