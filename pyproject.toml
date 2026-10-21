@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "api-case-platform"
+version = "0.1.0"
+description = "Swagger 驱动的接口测试用例智能生成与质量评测平台"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "pydantic>=2.6",
+    "httpx>=0.27",
+    "pytest>=8",
+    "pyyaml>=6",
+    "jinja2>=3.1",
+    "pandas>=2.1",
+    "openai>=1.30",
+    "python-dotenv>=1.0",
+    "streamlit>=1.32",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra -p no:cacheprovider"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
