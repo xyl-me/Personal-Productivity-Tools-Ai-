@@ -1,0 +1,163 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mini Order API",
+    "version": "1.2.0",
+    "description": "用于解析层测试的精简文档, 覆盖 allOf 继承 / 可空字段 / 自引用结构"
+  },
+  "servers": [
+    {
+      "url": "http://{host}/api/v1",
+      "variables": { "host": { "default": "127.0.0.1:8000" } }
+    }
+  ],
+  "tags": [{ "name": "orders" }, { "name": "tree" }],
+  "paths": {
+    "/orders": {
+      "parameters": [
+        {
+          "name": "X-Tenant-Id",
+          "in": "header",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "租户 ID"
+        }
+      ],
+      "get": {
+        "operationId": "listOrders",
+        "summary": "分页查询订单",
+        "tags": ["orders"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 1 } },
+          { "name": "page_size", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["CREATED", "PAID"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrder",
+        "summary": "创建订单",
+        "tags": ["orders"],
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateOrderRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Order" } }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "operationId": "getOrder",
+        "summary": "按 ID 查询订单",
+        "tags": ["orders"],
+        "parameters": [{ "name": "order_id", "in": "path", "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } }
+          }
+        }
+      }
+    },
+    "/nodes/{node_id}": {
+      "get": {
+        "operationId": "getNode",
+        "summary": "查询节点(自引用结构)",
+        "tags": ["tree"],
+        "parameters": [
+          { "name": "node_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Node" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "X-Api-Key" }
+    },
+    "schemas": {
+      "OrderBase": {
+        "type": "object",
+        "required": ["item_id", "quantity"],
+        "properties": {
+          "item_id": { "type": "string", "minLength": 1, "maxLength": 32 },
+          "quantity": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "CreateOrderRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OrderBase" },
+          {
+            "type": "object",
+            "properties": {
+              "amount": { "type": "number", "exclusiveMinimum": 0 },
+              "remark": { "type": "string", "maxLength": 200 },
+              "coupon": { "type": "string", "nullable": true },
+              "channel": {
+                "anyOf": [{ "type": "string", "enum": ["web", "app"] }, { "type": "null" }]
+              }
+            }
+          }
+        ]
+      },
+      "Order": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OrderBase" },
+          {
+            "type": "object",
+            "required": ["id", "status"],
+            "properties": {
+              "id": { "type": "integer" },
+              "status": { "type": "string", "enum": ["CREATED", "PAID", "CANCELLED"] },
+              "created_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": { "code": { "type": "integer" }, "message": { "type": "string" } }
+      },
+      "Node": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "parent": { "$ref": "#/components/schemas/Node" },
+          "children": { "type": "array", "items": { "$ref": "#/components/schemas/Node" } }
+        }
+      }
+    }
+  }
+}
