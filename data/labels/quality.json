@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "threshold": 80,
+  "note": "作者按 data/labels/RUBRIC.md 标注的种子数据集。标注在看过规则输出之前完成, 但仍由同一作者完成, 与规则共享同一套 rubric —— 所以这里算出的 κ 偏乐观, 只能说明『一致性计算管线可用』, 不能替代多人独立标注。README 中已明确说明这一局限。",
+  "labels": [
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "POST /api/v1/orders",
+      "human_score": 78,
+      "human_pass": false,
+      "note": "正向 + 必填缺失 + 金额负数 + 数量 0 + 备注 21~200; 缺超长备注与类型错误"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "GET /api/v1/orders",
+      "human_score": 62,
+      "human_pass": false,
+      "note": "只有 page=0 与 page_size=-1 两个下边界, 缺上限与类型错误"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "GET /api/v1/orders/search",
+      "human_score": 55,
+      "human_pass": false,
+      "note": "只有正向与注入两条, 缺空串与超长关键字"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "GET /api/v1/orders/{order_id}",
+      "human_score": 76,
+      "human_pass": false,
+      "note": "正向 + 404 + 非数字 ID, 缺超长 ID"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "PUT /api/v1/orders/{order_id}/status",
+      "human_score": 35,
+      "human_pass": false,
+      "note": "只有一条枚举外值, 没有正向流转、没有 404、没有必填缺失"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "DELETE /api/v1/orders/{order_id}",
+      "human_score": 90,
+      "human_pass": true,
+      "note": "无令牌 401、带令牌 200、不存在 404 三条场景全覆盖"
+    },
+    {
+      "suite": "order_service_handwritten",
+      "endpoint": "GET /api/v1/admin/orders/export",
+      "human_score": 60,
+      "human_pass": false,
+      "note": "只有无令牌 401 一条, 缺带令牌与错误令牌"
+    }
+  ]
+}

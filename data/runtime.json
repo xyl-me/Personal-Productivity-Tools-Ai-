@@ -1,0 +1,10 @@
+{
+  "note": "测试运行时上下文。Swagger 里没有凭据值、也没说哪个 ID 真实存在, 这两件事由平台注入, 不交给模型猜。值只在本文件里, 不会拼进 Prompt, 也不会提交到仓库。",
+  "headers": {
+    "X-Admin-Token": "secret-admin-token"
+  },
+  "path_params": {
+    "order_id": "1"
+  },
+  "query": {}
+}

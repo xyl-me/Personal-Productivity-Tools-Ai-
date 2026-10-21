@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "note": "人工标注的业务场景清单。每条场景声明一个可机器判定的 matcher, 所以场景召回率可以自动算, 不需要人工把用例和场景一一对应。这份清单独立于 app/evaluator/rules.py 的通用维度规则, 是另一套评价视角。",
+  "endpoints": {
+    "POST /api/v1/orders": [
+      {
+        "id": "S-POST-1",
+        "scenario": "合法请求创建成功",
+        "matcher": { "mode": "expect_lt", "value": 400 }
+      },
+      {
+        "id": "S-POST-2",
+        "scenario": "缺少必填 item_id",
+        "matcher": { "mode": "missing", "location": "body", "field": "item_id" }
+      },
+      {
+        "id": "S-POST-3",
+        "scenario": "金额为负数",
+        "matcher": { "mode": "lt", "location": "body", "field": "amount", "value": 0 }
+      },
+      {
+        "id": "S-POST-4",
+        "scenario": "数量为 0 或负数",
+        "matcher": { "mode": "lte", "location": "body", "field": "quantity", "value": 0 }
+      },
+      {
+        "id": "S-POST-5",
+        "scenario": "备注超过文档上限 200 字符",
+        "matcher": { "mode": "len_gt", "location": "body", "field": "remark", "value": 200 }
+      },
+      {
+        "id": "S-POST-6",
+        "scenario": "备注取 21~200 字符 (文档允许但实现拒绝)",
+        "matcher": {
+          "mode": "len_between",
+          "location": "body",
+          "field": "remark",
+          "value": 20,
+          "value2": 200
+        }
+      },
+      {
+        "id": "S-POST-7",
+        "scenario": "金额传字符串 (类型错误)",
+        "matcher": { "mode": "non_numeric", "location": "body", "field": "amount" }
+      }
+    ],
+    "GET /api/v1/orders": [
+      {
+        "id": "S-LIST-1",
+        "scenario": "默认分页正常返回",
+        "matcher": { "mode": "expect_lt", "value": 400 }
+      },
+      {
+        "id": "S-LIST-2",
+        "scenario": "page 为 0",
+        "matcher": { "mode": "lt", "location": "query", "field": "page", "value": 1 }
+      },
+      {
+        "id": "S-LIST-3",
+        "scenario": "page_size 为负数",
+        "matcher": { "mode": "lt", "location": "query", "field": "page_size", "value": 1 }
+      },
+      {
+        "id": "S-LIST-4",
+        "scenario": "page_size 超过上限 100",
+        "matcher": { "mode": "gt", "location": "query", "field": "page_size", "value": 100 }
+      },
+      {
+        "id": "S-LIST-5",
+        "scenario": "page 传非数字",
+        "matcher": { "mode": "non_numeric", "location": "query", "field": "page" }
+      }
+    ],
+    "GET /api/v1/orders/search": [
+      {
+        "id": "S-SEARCH-1",
+        "scenario": "精确关键字能搜到",
+        "matcher": { "mode": "expect_lt", "value": 400 }
+      },
+      {
+        "id": "S-SEARCH-2",
+        "scenario": "注入串被当作字面量",
+        "matcher": { "mode": "injection", "location": "query", "field": "q" }
+      },
+      {
+        "id": "S-SEARCH-3",
+        "scenario": "空关键字",
+        "matcher": { "mode": "empty", "location": "query", "field": "q" }
+      },
+      {
+        "id": "S-SEARCH-4",
+        "scenario": "超长关键字 (200 字符以上)",
+        "matcher": { "mode": "len_gt", "location": "query", "field": "q", "value": 200 }
+      }
+    ],
+    "GET /api/v1/orders/{order_id}": [
+      {
+        "id": "S-GET-1",
+        "scenario": "存在的订单能查到",
+        "matcher": { "mode": "expect_lt", "value": 400 }
+      },
+      {
+        "id": "S-GET-2",
+        "scenario": "不存在的订单返回 404",
+        "matcher": { "mode": "expect_status", "value": 404 }
+      },
+      {
+        "id": "S-GET-3",
+        "scenario": "非数字 ID 不返回 5xx",
+        "matcher": { "mode": "non_numeric", "location": "path", "field": "order_id" }
+      },
+      {
+        "id": "S-GET-4",
+        "scenario": "超长 ID (50 字符以上)",
+        "matcher": {
+          "mode": "len_gt",
+          "location": "path",
+          "field": "order_id",
+          "value": 50
+        }
+      }
+    ],
+    "PUT /api/v1/orders/{order_id}/status": [
+      {
+        "id": "S-PUT-1",
+        "scenario": "合法状态流转成功",
+        "matcher": { "mode": "expect_lt", "value": 400 }
+      },
+      {
+        "id": "S-PUT-2",
+        "scenario": "非法状态值被拒绝",
+        "matcher": {
+          "mode": "not_in_enum",
+          "location": "body",
+          "field": "status",
+          "enum": ["CREATED", "PAID", "CANCELLED"]
+        }
+      },
+      {
+        "id": "S-PUT-3",
+        "scenario": "缺少 status 字段",
+        "matcher": { "mode": "missing", "location": "body", "field": "status" }
+      },
+      {
+        "id": "S-PUT-4",
+        "scenario": "订单不存在返回 404",
+        "matcher": { "mode": "expect_status", "value": 404 }
+      }
+    ],
+    "DELETE /api/v1/orders/{order_id}": [
+      {
+        "id": "S-DEL-1",
+        "scenario": "缺少管理员令牌返回 401/403",
+        "matcher": { "mode": "no_auth" }
+      },
+      {
+        "id": "S-DEL-2",
+        "scenario": "带令牌删除成功",
+        "matcher": { "mode": "expect_status", "value": 200 }
+      },
+      {
+        "id": "S-DEL-3",
+        "scenario": "删除不存在的订单返回 404",
+        "matcher": { "mode": "expect_status", "value": 404 }
+      }
+    ],
+    "GET /api/v1/admin/orders/export": [
+      {
+        "id": "S-EXP-1",
+        "scenario": "缺少令牌应拒绝",
+        "matcher": { "mode": "no_auth" }
+      },
+      {
+        "id": "S-EXP-2",
+        "scenario": "带令牌成功导出",
+        "matcher": { "mode": "expect_status", "value": 200 }
+      },
+      {
+        "id": "S-EXP-3",
+        "scenario": "令牌错误返回 401",
+        "matcher": { "mode": "expect_status", "value": 401 }
+      }
+    ]
+  }
+}
